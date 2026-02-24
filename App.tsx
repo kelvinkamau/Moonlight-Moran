@@ -10,12 +10,12 @@ const App: React.FC = () => {
   const [highScore, setHighScore] = useState<number>(0);
   const [highScoreCoins, setHighScoreCoins] = useState<number>(0);
   const [causeOfDeath, setCauseOfDeath] = useState<string>('');
-  
+
   // Session ID to force re-mount of GameCanvas on Restart
   const [gameSessionId, setGameSessionId] = useState<number>(0);
 
   const startGame = () => {
-    initAudio(); 
+    initAudio();
     setGameSessionId(prev => prev + 1); // Reset game canvas
     setGameState(GameState.PLAYING);
     setScore(0);
@@ -25,7 +25,7 @@ const App: React.FC = () => {
   const handleGameOver = async (finalScore: number, finalCoins: number, cause: string) => {
     setGameState(GameState.GAME_OVER);
     setCauseOfDeath(cause);
-    
+
     // Update High Scores
     if (finalScore > highScore) {
       setHighScore(finalScore);
@@ -49,7 +49,7 @@ const App: React.FC = () => {
       // Spacebar controls
       if (e.code === 'Space') {
         e.preventDefault(); // Prevent scrolling
-        
+
         if (gameState === GameState.MENU || gameState === GameState.GAME_OVER) {
           startGame();
         } else {
@@ -62,140 +62,144 @@ const App: React.FC = () => {
   }, [gameState]);
 
   return (
-    <div className="relative w-screen h-screen bg-slate-950 flex items-center justify-center overflow-hidden">
-      
-      {/* Game Canvas Layer - Keyed by sessionId to ensure fresh start */}
-      <div className="absolute inset-0 z-0">
-        <GameCanvas 
-          key={gameSessionId}
-          gameState={gameState} 
-          onGameOver={handleGameOver} 
-          setScore={setScore}
-          setCollectiblesCount={setCollectiblesCount}
-        />
-      </div>
+      <div className="relative w-screen h-screen bg-slate-950 flex items-center justify-center overflow-hidden">
 
-      {/* HUD Layer (Visible when playing or paused) */}
-      {(gameState === GameState.PLAYING || gameState === GameState.PAUSED) && (
-        <>
-          {/* Left and Right HUD elements */}
-          <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-10 pointer-events-none">
-            <div className="flex flex-col">
-              <span className="text-blue-200 text-sm tracking-widest uppercase">Distance</span>
-              <span className="text-4xl font-bold text-white font-mono">{score}m</span>
-            </div>
-            
-            <div className="flex flex-col text-right gap-1">
-              <div className="flex flex-col">
-                <span className="text-slate-400 text-xs tracking-widest uppercase">Best Dist</span>
-                <span className="text-xl font-bold text-slate-300 font-mono">{highScore}m</span>
+        {/* Game Canvas Layer - Keyed by sessionId to ensure fresh start */}
+        <div className="absolute inset-0 z-0">
+          <GameCanvas
+              key={gameSessionId}
+              gameState={gameState}
+              onGameOver={handleGameOver}
+              setScore={setScore}
+              setCollectiblesCount={setCollectiblesCount}
+          />
+        </div>
+
+        {/* HUD Layer (Visible when playing or paused) */}
+        {(gameState === GameState.PLAYING || gameState === GameState.PAUSED) && (
+            <>
+              {/* Left and Right HUD elements */}
+              <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-10 pointer-events-none">
+                <div className="flex flex-col">
+                  <span className="text-blue-200 text-sm tracking-widest uppercase">Distance</span>
+                  <span className="text-4xl font-bold text-white font-mono">{score}m</span>
+                </div>
+
+                <div className="flex flex-col text-right gap-1">
+                  <div className="flex flex-col">
+                    <span className="text-slate-400 text-xs tracking-widest uppercase">Best Dist</span>
+                    <span className="text-xl font-bold text-slate-300 font-mono">{highScore}m</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-slate-400 text-xs tracking-widest uppercase">Best Coins</span>
+                    <span className="text-xl font-bold text-yellow-500/80 font-mono">{highScoreCoins}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-slate-400 text-xs tracking-widest uppercase">Best Coins</span>
-                <span className="text-xl font-bold text-yellow-500/80 font-mono">{highScoreCoins}</span>
+
+              {/* Center HUD (Coins) - Positioned absolutely in the center */}
+              <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center">
+                <span className="text-yellow-200 text-sm tracking-widest uppercase">Coins</span>
+                <span className="text-4xl font-bold text-yellow-400 font-mono">{collectiblesCount}</span>
+              </div>
+            </>
+        )}
+
+        {/* Pause Overlay */}
+        {gameState === GameState.PAUSED && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
+              <h2 className="text-5xl font-bold text-white mb-4 tracking-[0.2em] drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
+                PAUSED
+              </h2>
+              <p className="text-slate-300 uppercase tracking-widest text-sm animate-pulse">
+                Press Space to Resume
+              </p>
+            </div>
+        )}
+
+        {/* Menu Overlay */}
+        {gameState === GameState.MENU && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+              <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-red-500 to-orange-100 tracking-tighter mb-4 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+                MOONLIGHT MORAN
+              </h1>
+              <p className="text-slate-300 mb-12 text-lg tracking-wider font-light">
+                The savanna awaits. Run like the wind.
+              </p>
+              <button
+                  onClick={startGame}
+                  className="group relative px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-bold text-xl tracking-widest uppercase transition-all duration-300 clip-path-polygon hover:scale-105 hover:shadow-[0_0_25px_rgba(220,38,38,0.6)]"
+                  style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0% 100%)' }}
+              >
+                Start Run
+                <div className="absolute inset-0 border-2 border-white/20 group-hover:border-white/50 transition-colors pointer-events-none" style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0% 100%)' }}></div>
+              </button>
+
+              <div className="mt-8 flex gap-8 text-slate-400 text-sm">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex gap-1">
+                    <span className="w-8 h-8 border border-slate-600 rounded flex items-center justify-center text-xs">↑</span>
+                  </div>
+                  <span>Jump (x3)</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex gap-1">
+                    <span className="px-3 h-8 border border-slate-600 rounded flex items-center justify-center text-xs">SPACE</span>
+                  </div>
+                  <span>Pause</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex gap-1">
+                    <span className="w-8 h-8 border border-slate-600 rounded flex items-center justify-center text-xs">←</span>
+                  </div>
+                  <span>Back</span>
+                </div>
               </div>
             </div>
-          </div>
+        )}
 
-          {/* Center HUD (Coins) - Positioned absolutely in the center */}
-          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center">
-            <span className="text-yellow-200 text-sm tracking-widest uppercase">Coins</span>
-            <span className="text-4xl font-bold text-yellow-400 font-mono">{collectiblesCount}</span>
-          </div>
-        </>
-      )}
+        {/* Game Over Overlay */}
+        {gameState === GameState.GAME_OVER && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
+              <h2 className="text-5xl font-bold text-red-500 mb-2 tracking-widest drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+                DEFEAT
+              </h2>
+              <p className="text-slate-400 mb-8 uppercase text-sm tracking-widest">
+                {causeOfDeath}
+              </p>
 
-      {/* Pause Overlay */}
-      {gameState === GameState.PAUSED && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm">
-           <h2 className="text-5xl font-bold text-white mb-4 tracking-[0.2em] drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">
-            PAUSED
-          </h2>
-          <p className="text-slate-300 uppercase tracking-widest text-sm animate-pulse">
-            Press Space to Resume
-          </p>
+              <div className="flex gap-12 mb-8">
+                <div className="flex flex-col items-center">
+                  <span className="text-slate-500 text-xs uppercase tracking-widest mb-1">Score</span>
+                  <span className="text-3xl font-mono text-white">{score}</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-slate-500 text-xs uppercase tracking-widest mb-1">Coins</span>
+                  <span className="text-3xl font-mono text-yellow-400">{collectiblesCount}</span>
+                </div>
+              </div>
+
+              <button
+                  onClick={startGame}
+                  className="px-8 py-3 bg-slate-100 hover:bg-white text-slate-900 font-bold text-lg tracking-widest uppercase transition-all duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+              >
+                Try Again
+              </button>
+              <p className="mt-4 text-slate-500 text-xs uppercase tracking-widest">
+                Press Space to Retry
+              </p>
+
+              <div className="absolute bottom-8 text-slate-500 text-xs tracking-widest uppercase">
+                Made by Kamau
+              </div>
+            </div>
+        )}
+
+        {/* Mobile Controls */}
+        <div className="absolute bottom-10 inset-x-0 flex justify-center z-10 md:hidden pointer-events-none">
+          <div className="text-white/30 text-sm uppercase tracking-widest animate-pulse">Tap to Jump</div>
         </div>
-      )}
-
-      {/* Menu Overlay */}
-      {gameState === GameState.MENU && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
-          <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-red-500 to-orange-100 tracking-tighter mb-4 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
-            MOONLIGHT MORAN
-          </h1>
-          <p className="text-slate-300 mb-12 text-lg tracking-wider font-light">
-            The savanna awaits. Run like the wind.
-          </p>
-          <button 
-            onClick={startGame}
-            className="group relative px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-bold text-xl tracking-widest uppercase transition-all duration-300 clip-path-polygon hover:scale-105 hover:shadow-[0_0_25px_rgba(220,38,38,0.6)]"
-            style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0% 100%)' }}
-          >
-            Start Run
-            <div className="absolute inset-0 border-2 border-white/20 group-hover:border-white/50 transition-colors pointer-events-none" style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0% 100%)' }}></div>
-          </button>
-          
-          <div className="mt-8 flex gap-8 text-slate-400 text-sm">
-            <div className="flex flex-col items-center gap-2">
-               <div className="flex gap-1">
-                 <span className="w-8 h-8 border border-slate-600 rounded flex items-center justify-center text-xs">↑</span>
-               </div>
-               <span>Jump (x3)</span>
-            </div>
-             <div className="flex flex-col items-center gap-2">
-               <div className="flex gap-1">
-                 <span className="px-3 h-8 border border-slate-600 rounded flex items-center justify-center text-xs">SPACE</span>
-               </div>
-               <span>Pause</span>
-            </div>
-             <div className="flex flex-col items-center gap-2">
-               <div className="flex gap-1">
-                 <span className="w-8 h-8 border border-slate-600 rounded flex items-center justify-center text-xs">←</span>
-               </div>
-               <span>Back</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Game Over Overlay */}
-      {gameState === GameState.GAME_OVER && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
-          <h2 className="text-5xl font-bold text-red-500 mb-2 tracking-widest drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">
-            DEFEAT
-          </h2>
-          <p className="text-slate-400 mb-8 uppercase text-sm tracking-widest">
-            Fallen by {causeOfDeath}
-          </p>
-
-          <div className="flex gap-12 mb-8">
-            <div className="flex flex-col items-center">
-              <span className="text-slate-500 text-xs uppercase tracking-widest mb-1">Score</span>
-              <span className="text-3xl font-mono text-white">{score}</span>
-            </div>
-             <div className="flex flex-col items-center">
-              <span className="text-slate-500 text-xs uppercase tracking-widest mb-1">Coins</span>
-              <span className="text-3xl font-mono text-yellow-400">{collectiblesCount}</span>
-            </div>
-          </div>
-
-          <button 
-            onClick={startGame}
-            className="px-8 py-3 bg-slate-100 hover:bg-white text-slate-900 font-bold text-lg tracking-widest uppercase transition-all duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-          >
-            Try Again
-          </button>
-           <p className="mt-4 text-slate-500 text-xs uppercase tracking-widest">
-            Press Space to Retry
-          </p>
-        </div>
-      )}
-
-      {/* Mobile Controls */}
-      <div className="absolute bottom-10 inset-x-0 flex justify-center z-10 md:hidden pointer-events-none">
-         <div className="text-white/30 text-sm uppercase tracking-widest animate-pulse">Tap to Jump</div>
       </div>
-    </div>
   );
 };
 

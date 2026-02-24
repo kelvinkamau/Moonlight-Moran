@@ -32,7 +32,7 @@ export const THEME_DAY = {
   ninja: '#0f172a',       // Slate 900
   scarf: '#dc2626',       // Red 600
   obstacle: '#166534',    // Green 800
-  collectible: '#facc15', 
+  collectible: '#facc15',
   collectibleGlow: 'rgba(250, 204, 21, 0.6)',
 };
 
