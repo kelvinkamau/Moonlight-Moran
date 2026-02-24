@@ -12,6 +12,7 @@ interface GameCanvasProps {
   onGameOver: (score: number, coins: number, cause: string) => void;
   setScore: (score: number) => void;
   setCollectiblesCount: (count: number) => void;
+  recoverSignal?: number;
 }
 
 interface ShootingStar {
@@ -44,7 +45,7 @@ const drawRoundedRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w:
   ctx.closePath();
 };
 
-export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onGameOver, setScore, setCollectiblesCount }) => {
+export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onGameOver, setScore, setCollectiblesCount, recoverSignal }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const requestRef = useRef<number>(0);
   const scoreRef = useRef<number>(0);
@@ -147,6 +148,35 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onGameOver, s
     shootingStarsRef.current = [];
 
   }, [setScore, setCollectiblesCount]);
+
+  useEffect(() => {
+    if (recoverSignal && recoverSignal > 0) {
+      const player = playerRef.current;
+      player.vy = 0;
+      player.vx = MOVE_SPEED;
+      player.jumpCount = 0;
+      player.isGrounded = false;
+
+      // Find a safe platform
+      const safePlatform = platformsRef.current.find(p => p.x + p.width > player.x && p.type !== 'moving');
+      if (safePlatform) {
+        player.x = Math.max(player.x, safePlatform.x + 20);
+        player.y = safePlatform.y - player.height - 20;
+      } else {
+        player.y = CANVAS_HEIGHT / 2;
+      }
+
+      // Clear nearby obstacles
+      obstaclesRef.current = obstaclesRef.current.filter(obs => Math.abs(obs.x - player.x) > 400);
+
+      // Deduct 40 coins
+      collectiblesCountRef.current -= 40;
+      setCollectiblesCount(collectiblesCountRef.current);
+
+      // Reset death state
+      squashTimerRef.current = 0;
+    }
+  }, [recoverSignal, setCollectiblesCount]);
 
   // Color Interpolation Helper
   const lerpColor = (c1: string, c2: string, t: number) => {
@@ -861,9 +891,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onGameOver, s
     ctx.globalAlpha = 0.4 * (1 - dayFactor * 0.5); // More subtle
     ctx.fillStyle = groundMid;
 
-    for (let i = -10; i < 50; i++) {
-      const offset = i * 120;
-      if (offset - mtnParallax < CANVAS_WIDTH && offset + 150 - mtnParallax > -200) {
+    const buildingSpacing = 160; // Increased spacing for thicker buildings
+    const startBuildingIdx = Math.floor(mtnParallax / buildingSpacing) - 5;
+    const endBuildingIdx = startBuildingIdx + Math.ceil(CANVAS_WIDTH / buildingSpacing) + 10;
+
+    for (let i = startBuildingIdx; i < endBuildingIdx; i++) {
+      const offset = i * buildingSpacing;
+      if (offset - mtnParallax < CANVAS_WIDTH && offset + 200 - mtnParallax > -200) {
         const buildingType = Math.abs(i) % 8;
 
         let height = 0;
@@ -874,78 +908,78 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onGameOver, s
 
         if (buildingType === 0) {
           // KICC (Cylindrical with saucer)
-          height = 200; width = 60;
-          ctx.fillRect(10, -height, width - 20, height);
+          height = 240; width = 90;
+          ctx.fillRect(15, -height, width - 30, height);
           // Saucer
           ctx.beginPath();
-          ctx.ellipse(width/2, -height, width/2 + 10, 10, 0, 0, Math.PI*2);
+          ctx.ellipse(width/2, -height, width/2 + 15, 15, 0, 0, Math.PI*2);
           ctx.fill();
           // Spire
-          ctx.fillRect(width/2 - 2, -height - 30, 4, 30);
+          ctx.fillRect(width/2 - 3, -height - 40, 6, 40);
         } else if (buildingType === 1) {
           // Times Tower (Tall, rectangular with spire)
-          height = 280; width = 70;
+          height = 320; width = 100;
           ctx.fillRect(0, -height, width, height);
-          ctx.fillRect(10, -height - 20, width - 20, 20);
-          ctx.fillRect(width/2 - 2, -height - 50, 4, 30);
+          ctx.fillRect(15, -height - 30, width - 30, 30);
+          ctx.fillRect(width/2 - 3, -height - 70, 6, 40);
         } else if (buildingType === 2) {
           // Britam Tower (Prismatic, slanted top)
-          height = 300; width = 80;
+          height = 350; width = 110;
           ctx.beginPath();
           ctx.moveTo(0, 0);
           ctx.lineTo(width, 0);
-          ctx.lineTo(width, -height + 40);
+          ctx.lineTo(width, -height + 50);
           ctx.lineTo(width/2, -height);
-          ctx.lineTo(0, -height + 40);
+          ctx.lineTo(0, -height + 50);
           ctx.fill();
           // Spire
-          ctx.fillRect(width/2 - 2, -height - 40, 4, 40);
+          ctx.fillRect(width/2 - 3, -height - 50, 6, 50);
         } else if (buildingType === 3) {
           // Prism Tower (Twisted/zigzag)
-          height = 180; width = 60;
+          height = 220; width = 80;
           ctx.beginPath();
           ctx.moveTo(0, 0);
           ctx.lineTo(width, 0);
-          ctx.lineTo(width - 10, -height/3);
+          ctx.lineTo(width - 15, -height/3);
           ctx.lineTo(width, -height*2/3);
-          ctx.lineTo(width - 10, -height);
-          ctx.lineTo(10, -height);
+          ctx.lineTo(width - 15, -height);
+          ctx.lineTo(15, -height);
           ctx.lineTo(0, -height*2/3);
-          ctx.lineTo(10, -height/3);
+          ctx.lineTo(15, -height/3);
           ctx.fill();
         } else if (buildingType === 4) {
           // Parliament Clock Tower
-          height = 150; width = 40;
+          height = 180; width = 60;
           ctx.fillRect(0, -height, width, height);
           // Clock face
           ctx.fillStyle = '#cbd5e1';
           ctx.beginPath();
-          ctx.arc(width/2, -height + 20, 10, 0, Math.PI*2);
+          ctx.arc(width/2, -height + 30, 15, 0, Math.PI*2);
           ctx.fill();
           ctx.fillStyle = groundMid;
           // Spire
           ctx.beginPath();
           ctx.moveTo(0, -height);
-          ctx.lineTo(width/2, -height - 30);
+          ctx.lineTo(width/2, -height - 40);
           ctx.lineTo(width, -height);
           ctx.fill();
         } else if (buildingType === 5) {
           // Generic tall
-          height = 220; width = 50;
+          height = 260; width = 80;
           ctx.fillRect(0, -height, width, height);
         } else if (buildingType === 6) {
           // Generic wide with flag
-          height = 120; width = 100;
+          height = 150; width = 130;
           ctx.fillRect(0, -height, width, height);
 
           // Kenyan Flag on top
-          const flagH = 15, flagW = 25, poleH = 30;
-          const wave = Math.sin(frameCount * 0.1) * 2;
+          const flagH = 20, flagW = 35, poleH = 40;
+          const wave = Math.sin(frameCount * 0.1) * 3;
           const peakX = width/2;
           const peakY = -height;
 
           ctx.strokeStyle = '#64748b';
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.moveTo(peakX, peakY);
           ctx.lineTo(peakX, peakY - poleH);
@@ -989,26 +1023,26 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onGameOver, s
           // Shield center
           ctx.fillStyle = '#b91c1c';
           ctx.beginPath();
-          ctx.ellipse(peakX + flagW/2, startY + flagH/2 + wave/2, 2.5, 5, 0, 0, Math.PI*2);
+          ctx.ellipse(peakX + flagW/2, startY + flagH/2 + wave/2, 3.5, 7, 0, 0, Math.PI*2);
           ctx.fill();
 
           ctx.fillStyle = groundMid;
         } else {
           // Generic stepped
-          height = 160; width = 70;
+          height = 200; width = 100;
           ctx.fillRect(0, -height, width, height);
-          ctx.fillRect(10, -height - 20, width - 20, 20);
-          ctx.fillRect(20, -height - 40, width - 40, 20);
+          ctx.fillRect(15, -height - 30, width - 30, 30);
+          ctx.fillRect(30, -height - 60, width - 60, 30);
         }
 
         // Windows
         ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-        const windowCols = Math.floor(width / 15);
-        const windowRows = Math.floor(height / 20);
+        const windowCols = Math.floor(width / 20);
+        const windowRows = Math.floor(height / 25);
         for (let r = 1; r < windowRows; r++) {
           for (let c = 1; c < windowCols; c++) {
             if (Math.sin(i * r * c) > 0) {
-              ctx.fillRect(c * 15, -height + r * 20, 6, 10);
+              ctx.fillRect(c * 20, -height + r * 25, 8, 12);
             }
           }
         }

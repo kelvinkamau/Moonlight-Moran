@@ -10,6 +10,7 @@ const App: React.FC = () => {
   const [highScore, setHighScore] = useState<number>(0);
   const [highScoreCoins, setHighScoreCoins] = useState<number>(0);
   const [causeOfDeath, setCauseOfDeath] = useState<string>('');
+  const [recoverSignal, setRecoverSignal] = useState<number>(0);
 
   // Session ID to force re-mount of GameCanvas on Restart
   const [gameSessionId, setGameSessionId] = useState<number>(0);
@@ -20,6 +21,13 @@ const App: React.FC = () => {
     setGameState(GameState.PLAYING);
     setScore(0);
     setCollectiblesCount(0);
+  };
+
+  const recoverGame = () => {
+    if (collectiblesCount >= 40) {
+      setRecoverSignal(prev => prev + 1);
+      setGameState(GameState.PLAYING);
+    }
   };
 
   const handleGameOver = async (finalScore: number, finalCoins: number, cause: string) => {
@@ -72,6 +80,7 @@ const App: React.FC = () => {
               onGameOver={handleGameOver}
               setScore={setScore}
               setCollectiblesCount={setCollectiblesCount}
+              recoverSignal={recoverSignal}
           />
         </div>
 
@@ -179,13 +188,26 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                  onClick={startGame}
-                  className="px-8 py-3 bg-slate-100 hover:bg-white text-slate-900 font-bold text-lg tracking-widest uppercase transition-all duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-              >
-                Try Again
-              </button>
-              <p className="mt-4 text-slate-500 text-xs uppercase tracking-widest">
+              <div className="flex flex-col gap-4 items-center">
+                <button
+                    onClick={startGame}
+                    className="px-8 py-3 bg-slate-100 hover:bg-white text-slate-900 font-bold text-lg tracking-widest uppercase transition-all duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] w-64"
+                >
+                  Try Again
+                </button>
+                <button
+                    onClick={recoverGame}
+                    disabled={collectiblesCount < 40}
+                    className={`px-8 py-3 font-bold text-lg tracking-widest uppercase transition-all duration-200 w-64 flex items-center justify-center gap-2 whitespace-nowrap ${
+                        collectiblesCount >= 40
+                            ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]'
+                            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                    }`}
+                >
+                  Recover (-40 <span className="text-sm">🟡</span>)
+                </button>
+              </div>
+              <p className="mt-6 text-slate-500 text-xs uppercase tracking-widest">
                 Press Space to Retry
               </p>
 
