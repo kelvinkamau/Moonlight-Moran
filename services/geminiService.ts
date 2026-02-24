@@ -11,7 +11,7 @@ export const getSenseiWisdom = async (causeOfDeath: string): Promise<GameWisdom>
 
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    
+
     // We want a quick, short response. Flash is perfect.
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
@@ -28,13 +28,13 @@ export const getSenseiWisdom = async (causeOfDeath: string): Promise<GameWisdom>
           required: ["message", "author"],
         },
         // Small thinking budget if we wanted reasoning, but not needed for simple creative writing.
-        thinkingConfig: { thinkingBudget: 0 } 
+        thinkingConfig: { thinkingBudget: 0 }
       }
     });
 
     const text = response.text;
     if (!text) throw new Error("No response text");
-    
+
     return JSON.parse(text) as GameWisdom;
   } catch (error) {
     console.error("Failed to get wisdom:", error);
