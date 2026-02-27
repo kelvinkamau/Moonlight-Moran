@@ -568,7 +568,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ gameState, onGameOver, s
       setScore(totalScore);
     }
 
-    const targetCamX = player.x - CANVAS_WIDTH * 0.25;
+    const aspectRatio = window.innerWidth / window.innerHeight;
+    const visibleWidth = Math.min(CANVAS_WIDTH, CANVAS_HEIGHT * aspectRatio);
+    const leftEdge = (CANVAS_WIDTH - visibleWidth) / 2;
+    const targetCamX = player.x - (leftEdge + visibleWidth * 0.10);
+
     cameraXRef.current += (targetCamX - cameraXRef.current) * 0.1;
   };
 

@@ -65,8 +65,22 @@ const App: React.FC = () => {
         }
       }
     };
+
+    const handleTouch = (e: TouchEvent) => {
+      if (gameState === GameState.MENU || gameState === GameState.GAME_OVER) {
+        // Only prevent default if we are actually handling it, to avoid breaking other touch interactions
+        if (e.target instanceof HTMLButtonElement) return; // Let buttons handle their own clicks
+        e.preventDefault();
+        startGame();
+      }
+    };
+
     window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
+    window.addEventListener('touchstart', handleTouch, { passive: false });
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      window.removeEventListener('touchstart', handleTouch);
+    };
   }, [gameState]);
 
   return (
@@ -88,28 +102,28 @@ const App: React.FC = () => {
         {(gameState === GameState.PLAYING || gameState === GameState.PAUSED) && (
             <>
               {/* Left and Right HUD elements */}
-              <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-10 pointer-events-none">
+              <div className="absolute top-0 left-0 w-full p-4 md:p-6 flex justify-between items-start z-10 pointer-events-none">
                 <div className="flex flex-col">
-                  <span className="text-blue-200 text-sm tracking-widest uppercase">Distance</span>
-                  <span className="text-4xl font-bold text-white font-mono">{score}m</span>
+                  <span className="text-blue-200 text-xs md:text-sm tracking-widest uppercase">Distance</span>
+                  <span className="text-2xl md:text-4xl font-bold text-white font-mono">{score}m</span>
                 </div>
 
                 <div className="flex flex-col text-right gap-1">
                   <div className="flex flex-col">
-                    <span className="text-slate-400 text-xs tracking-widest uppercase">Best Dist</span>
-                    <span className="text-xl font-bold text-slate-300 font-mono">{highScore}m</span>
+                    <span className="text-slate-400 text-[10px] md:text-xs tracking-widest uppercase">Best Dist</span>
+                    <span className="text-sm md:text-xl font-bold text-slate-300 font-mono">{highScore}m</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-slate-400 text-xs tracking-widest uppercase">Best Coins</span>
-                    <span className="text-xl font-bold text-yellow-500/80 font-mono">{highScoreCoins}</span>
+                    <span className="text-slate-400 text-[10px] md:text-xs tracking-widest uppercase">Best Coins</span>
+                    <span className="text-sm md:text-xl font-bold text-yellow-500/80 font-mono">{highScoreCoins}</span>
                   </div>
                 </div>
               </div>
 
               {/* Center HUD (Coins) - Positioned absolutely in the center */}
-              <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center">
-                <span className="text-yellow-200 text-sm tracking-widest uppercase">Coins</span>
-                <span className="text-4xl font-bold text-yellow-400 font-mono">{collectiblesCount}</span>
+              <div className="absolute top-4 md:top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center">
+                <span className="text-yellow-200 text-xs md:text-sm tracking-widest uppercase">Coins</span>
+                <span className="text-2xl md:text-4xl font-bold text-yellow-400 font-mono">{collectiblesCount}</span>
               </div>
             </>
         )}
@@ -129,7 +143,7 @@ const App: React.FC = () => {
         {/* Menu Overlay */}
         {gameState === GameState.MENU && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
-              <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-br from-red-500 to-orange-100 tracking-tighter mb-4 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+              <h1 className="text-[40px] md:text-[76px] font-black text-transparent bg-clip-text bg-gradient-to-br from-red-500 to-orange-100 tracking-tighter mb-4 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
                 MOONLIGHT MORAN
               </h1>
               <p className="text-slate-300 mb-12 text-lg tracking-wider font-light">
@@ -144,24 +158,24 @@ const App: React.FC = () => {
                 <div className="absolute inset-0 border-2 border-white/20 group-hover:border-white/50 transition-colors pointer-events-none" style={{ clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0% 100%)' }}></div>
               </button>
 
-              <div className="mt-8 flex gap-8 text-slate-400 text-sm">
-                <div className="flex flex-col items-center gap-2">
+              <div className="mt-12 flex gap-8 text-slate-400 text-sm">
+                <div className="flex flex-col items-center gap-3">
                   <div className="flex gap-1">
-                    <span className="w-8 h-8 border border-slate-600 rounded flex items-center justify-center text-xs">↑</span>
+                    <kbd className="w-10 h-10 inline-flex items-center justify-center bg-slate-800 border border-slate-700 border-b-[4px] border-b-slate-900 rounded-md text-slate-300 font-mono text-sm font-bold shadow-sm">↑</kbd>
                   </div>
-                  <span>Jump (x3)</span>
+                  <span className="uppercase tracking-widest text-xs">Jump (x3)</span>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-3">
                   <div className="flex gap-1">
-                    <span className="px-3 h-8 border border-slate-600 rounded flex items-center justify-center text-xs">SPACE</span>
+                    <kbd className="px-6 h-10 inline-flex items-center justify-center bg-slate-800 border border-slate-700 border-b-[4px] border-b-slate-900 rounded-md text-slate-300 font-mono text-sm font-bold shadow-sm">SPACE</kbd>
                   </div>
-                  <span>Pause</span>
+                  <span className="uppercase tracking-widest text-xs">Pause</span>
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex flex-col items-center gap-3">
                   <div className="flex gap-1">
-                    <span className="w-8 h-8 border border-slate-600 rounded flex items-center justify-center text-xs">←</span>
+                    <kbd className="w-10 h-10 inline-flex items-center justify-center bg-slate-800 border border-slate-700 border-b-[4px] border-b-slate-900 rounded-md text-slate-300 font-mono text-sm font-bold shadow-sm">←</kbd>
                   </div>
-                  <span>Back</span>
+                  <span className="uppercase tracking-widest text-xs">Back</span>
                 </div>
               </div>
             </div>
@@ -170,57 +184,73 @@ const App: React.FC = () => {
         {/* Game Over Overlay */}
         {gameState === GameState.GAME_OVER && (
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
-              <h2 className="text-5xl font-bold text-red-500 mb-2 tracking-widest drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+              <h2 className="text-4xl md:text-5xl font-bold text-red-500 mb-2 tracking-widest drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">
                 DEFEAT
               </h2>
-              <p className="text-slate-400 mb-8 uppercase text-sm tracking-widest">
+              <p className="text-slate-400 mb-6 md:mb-8 uppercase text-xs md:text-sm tracking-widest">
                 {causeOfDeath}
               </p>
 
-              <div className="flex gap-12 mb-8">
+              <div className="flex gap-8 md:gap-12 mb-6 md:mb-8">
                 <div className="flex flex-col items-center">
-                  <span className="text-slate-500 text-xs uppercase tracking-widest mb-1">Score</span>
-                  <span className="text-3xl font-mono text-white">{score}</span>
+                  <span className="text-slate-500 text-[10px] md:text-xs uppercase tracking-widest mb-1">Score</span>
+                  <span className="text-2xl md:text-3xl font-mono text-white">{score}</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-slate-500 text-xs uppercase tracking-widest mb-1">Coins</span>
-                  <span className="text-3xl font-mono text-yellow-400">{collectiblesCount}</span>
+                  <span className="text-slate-500 text-[10px] md:text-xs uppercase tracking-widest mb-1">Coins</span>
+                  <span className="text-2xl md:text-3xl font-mono text-yellow-400">{collectiblesCount}</span>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4 items-center">
+              <div className="flex flex-col gap-3 md:gap-4 items-center">
                 <button
                     onClick={startGame}
-                    className="px-8 py-3 bg-slate-100 hover:bg-white text-slate-900 font-bold text-lg tracking-widest uppercase transition-all duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] w-64"
+                    className="px-6 md:px-8 py-2 md:py-3 bg-slate-100 hover:bg-white text-slate-900 font-bold text-base md:text-lg tracking-widest uppercase transition-all duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] w-56 md:w-64"
                 >
                   Try Again
                 </button>
                 <button
                     onClick={recoverGame}
                     disabled={collectiblesCount < 40}
-                    className={`px-8 py-3 font-bold text-lg tracking-widest uppercase transition-all duration-200 w-64 flex items-center justify-center gap-2 whitespace-nowrap ${
+                    className={`px-6 md:px-8 py-2 md:py-3 font-bold text-base md:text-lg tracking-widest uppercase transition-all duration-200 w-56 md:w-64 flex items-center justify-center gap-2 whitespace-nowrap ${
                         collectiblesCount >= 40
                             ? 'bg-yellow-500 hover:bg-yellow-400 text-slate-900 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]'
                             : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                     }`}
                 >
-                  Recover (-40 <span className="text-sm">🟡</span>)
+                  Recover (-40 <span className="text-xs md:text-sm">🟡</span>)
                 </button>
               </div>
-              <p className="mt-6 text-slate-500 text-xs uppercase tracking-widest">
+              <p className="mt-4 md:mt-6 text-slate-500 text-[10px] md:text-xs uppercase tracking-widest">
                 Press Space to Retry
               </p>
+
+              <div className="mt-8 md:mt-12 flex gap-4 md:gap-8 text-slate-500 text-sm opacity-80 scale-75 md:scale-100 origin-top">
+                <div className="flex flex-col items-center gap-2 md:gap-3">
+                  <div className="flex gap-1">
+                    <kbd className="w-8 h-8 md:w-10 md:h-10 inline-flex items-center justify-center bg-slate-800 border border-slate-700 border-b-[3px] md:border-b-[4px] border-b-slate-900 rounded-md text-slate-300 font-mono text-xs md:text-sm font-bold shadow-sm">↑</kbd>
+                  </div>
+                  <span className="uppercase tracking-widest text-[10px] md:text-xs">Jump (x3)</span>
+                </div>
+                <div className="flex flex-col items-center gap-2 md:gap-3">
+                  <div className="flex gap-1">
+                    <kbd className="px-4 md:px-6 h-8 md:h-10 inline-flex items-center justify-center bg-slate-800 border border-slate-700 border-b-[3px] md:border-b-[4px] border-b-slate-900 rounded-md text-slate-300 font-mono text-xs md:text-sm font-bold shadow-sm">SPACE</kbd>
+                  </div>
+                  <span className="uppercase tracking-widest text-[10px] md:text-xs">Pause</span>
+                </div>
+                <div className="flex flex-col items-center gap-2 md:gap-3">
+                  <div className="flex gap-1">
+                    <kbd className="w-8 h-8 md:w-10 md:h-10 inline-flex items-center justify-center bg-slate-800 border border-slate-700 border-b-[3px] md:border-b-[4px] border-b-slate-900 rounded-md text-slate-300 font-mono text-xs md:text-sm font-bold shadow-sm">←</kbd>
+                  </div>
+                  <span className="uppercase tracking-widest text-[10px] md:text-xs">Back</span>
+                </div>
+              </div>
 
               <div className="absolute bottom-8 text-slate-500 text-xs tracking-widest uppercase">
                 Made by Kamau
               </div>
             </div>
         )}
-
-        {/* Mobile Controls */}
-        <div className="absolute bottom-10 inset-x-0 flex justify-center z-10 md:hidden pointer-events-none">
-          <div className="text-white/30 text-sm uppercase tracking-widest animate-pulse">Tap to Jump</div>
-        </div>
       </div>
   );
 };
